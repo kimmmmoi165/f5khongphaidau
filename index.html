@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magic Christmas - Final Fixed</title>
+    <title>Magic Christmas - 6 Images Edition</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -23,7 +23,7 @@
 </head>
 <body>
     <div id="ui-layer">
-        <div class="guide">🖐 <b>Open:</b> Explode &nbsp;|&nbsp; 🫶 <b>Heart:</b> Love &nbsp;|&nbsp; ✊ <b>Fist:</b> Tree</div>
+        <div class="guide">🖐 <b>Xòe tay:</b> Xem ảnh &nbsp;|&nbsp; ✊ <b>Nắm tay:</b> Cây thông &nbsp;|&nbsp; 👌 <b>Chụm ngón:</b> Phóng to</div>
         <button id="btnStart" onclick="startSystem()">START MAGIC</button>
     </div>
     <div id="copyright">© by vandiep</div>
@@ -37,7 +37,8 @@
         bgMusic.loop = true; bgMusic.volume = 1.0;
 
         const loader = new THREE.TextureLoader();
-        const photoFiles = ['image1.jpg', 'image2.jpg', 'image3.jpg', 'image4.jpg', 'image5.jpg'];
+        // Cập nhật lên 6 ảnh
+        const photoFiles = ['image1.jpg', 'image2.jpg', 'image3.jpg', 'image4.jpg', 'image5.jpg', 'image6.jpg'];
         const photoTextures = [];
         photoFiles.forEach((f, i) => photoTextures[i] = loader.load(f));
 
@@ -64,12 +65,12 @@
 
         const textures = { gold: createCustomTexture('gold_glow'), red: createCustomTexture('red_light'), gift: createCustomTexture('gift_red') };
 
-        const CONFIG = { goldCount: 2000, redCount: 300, giftCount: 150, explodeRadius: 65, photoOrbitRadius: 25, treeHeight: 70, treeBaseRadius: 35 };
+        const CONFIG = { goldCount: 2000, redCount: 300, giftCount: 150, explodeRadius: 65, photoOrbitRadius: 28, treeHeight: 70, treeBaseRadius: 35 };
 
         let scene, camera, renderer;
         let groupGold, groupRed, groupGift; 
         let photoMeshes = [];    
-        let titleMesh, starMesh, loveMesh;
+        let titleMesh, starMesh;
         let state = 'TREE'; let selectedIndex = 0; let handX = 0.5;
 
         function init3D() {
@@ -87,7 +88,6 @@
             groupRed = createParticleSystem('red', CONFIG.redCount, 3.5); 
             groupGift = createParticleSystem('gift', CONFIG.giftCount, 3.0); 
 
-            // SNOW SYSTEM
             const snowGeo = new THREE.BufferGeometry();
             const snowPosArr = new Float32Array(1500 * 3);
             for(let i=0; i<4500; i++) snowPosArr[i] = (Math.random() - 0.5) * 250;
@@ -102,7 +102,7 @@
         }
 
         function createParticleSystem(type, count, size) {
-            const pPositions = []; const pExplodeTargets = []; const pTreeTargets = []; const pHeartTargets = []; const sizes = []; const phases = []; 
+            const pPositions = []; const pExplodeTargets = []; const pTreeTargets = []; const sizes = []; const phases = []; 
             for(let i=0; i<count; i++) {
                 const h = Math.random() * CONFIG.treeHeight; const y = h - CONFIG.treeHeight / 2;
                 let radiusRatio = (type === 'gold') ? Math.sqrt(Math.random()) : 0.9 + Math.random()*0.1;
@@ -112,11 +112,7 @@
                 const u = Math.random(); const v = Math.random(); const phi = Math.acos(2 * v - 1); const lam = 2 * Math.PI * u;
                 let radMult = (type === 'gift') ? 1.2 : 1.0; const rad = CONFIG.explodeRadius * Math.cbrt(Math.random()) * radMult;
                 pExplodeTargets.push(rad * Math.sin(phi) * Math.cos(lam), rad * Math.sin(phi) * Math.sin(lam), rad * Math.cos(phi));
-                const tHeart = Math.random() * Math.PI * 2;
-                let hx = 16 * Math.pow(Math.sin(tHeart), 3); let hy = 13 * Math.cos(tHeart) - 5 * Math.cos(2*tHeart) - 2 * Math.cos(3*tHeart) - Math.cos(4*tHeart);
-                const rFill = Math.pow(Math.random(), 0.3); hx *= rFill; hy *= rFill;
-                let hz = (Math.random() - 0.5) * 8 * rFill; const noise = 1.0; hx += (Math.random() - 0.5) * noise; hy += (Math.random() - 0.5) * noise; hz += (Math.random() - 0.5) * noise;
-                const scaleH = 2.2; pHeartTargets.push(hx * scaleH, hy * scaleH + 5, hz); 
+                
                 pPositions.push(pTreeTargets[i*3], pTreeTargets[i*3+1], pTreeTargets[i*3+2]);
                 sizes.push(size); phases.push(Math.random() * Math.PI * 2);
             }
@@ -125,14 +121,15 @@
             if(type === 'gold') baseColor.setHex(0xFFD700); else if(type === 'red') baseColor.setHex(0xFF0000); else baseColor.setHex(0xFFFFFF);
             for(let i=0; i<count; i++) { colors[i*3] = baseColor.r; colors[i*3+1] = baseColor.g; colors[i*3+2] = baseColor.b; }
             geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-            geo.userData = { tree: pTreeTargets, explode: pExplodeTargets, heart: pHeartTargets, phases: phases, baseColor: baseColor, baseSize: size };
+            geo.userData = { tree: pTreeTargets, explode: pExplodeTargets, phases: phases, baseColor: baseColor, baseSize: size };
             const mat = new THREE.PointsMaterial({ size: size, map: textures[type], transparent: true, opacity: 1.0, vertexColors: true, blending: (type === 'gift') ? THREE.NormalBlending : THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
             const points = new THREE.Points(geo, mat); scene.add(points); return points;
         }
 
         function createPhotos() {
             const geo = new THREE.PlaneGeometry(8, 8); const borderGeo = new THREE.PlaneGeometry(9, 9); const borderMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 }); 
-            for(let i=0; i<5; i++) {
+            // Tạo 6 mesh cho 6 ảnh
+            for(let i=0; i<6; i++) {
                 const mat = new THREE.MeshBasicMaterial({ map: photoTextures[i], side: THREE.DoubleSide });
                 const mesh = new THREE.Mesh(geo, mat); const border = new THREE.Mesh(borderGeo, borderMat); border.position.z = -0.1; mesh.add(border);
                 mesh.visible = false; mesh.scale.set(0,0,0); scene.add(mesh); photoMeshes.push(mesh);
@@ -153,19 +150,14 @@
             sCtx.closePath(); sCtx.fill();
             const starTex = new THREE.CanvasTexture(starCanvas); const starMat = new THREE.MeshBasicMaterial({ map: starTex, transparent: true, blending: THREE.AdditiveBlending });
             starMesh = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), starMat); starMesh.position.set(0, CONFIG.treeHeight/2 + 2, 0); scene.add(starMesh);
-
-            const loveCanvas = document.createElement('canvas'); loveCanvas.width = 1024; loveCanvas.height = 256; const lCtx = loveCanvas.getContext('2d');
-            lCtx.font = 'bold 120px "Segoe UI", sans-serif'; lCtx.fillStyle = '#FF69B4'; lCtx.textAlign = 'center'; lCtx.shadowColor = "#FF1493"; lCtx.shadowBlur = 40; 
-            lCtx.fillText("I MISS YOU ❤️", 512, 130);
-            const loveTex = new THREE.CanvasTexture(loveCanvas); const loveMat = new THREE.MeshBasicMaterial({ map: loveTex, transparent: true, blending: THREE.AdditiveBlending });
-            loveMesh = new THREE.Mesh(new THREE.PlaneGeometry(70, 18), loveMat); loveMesh.position.set(0, 0, 20); loveMesh.visible = false; scene.add(loveMesh);
         }
 
         function updateParticleGroup(group, type, targetState, speed, handRotY, time) {
             const positions = group.geometry.attributes.position.array; const sizes = group.geometry.attributes.size.array; const colors = group.geometry.attributes.color.array;
             const phases = group.geometry.userData.phases; const baseColor = group.geometry.userData.baseColor; const baseSize = group.geometry.userData.baseSize;
-            const targetKey = (targetState === 'TREE') ? 'tree' : (targetState === 'HEART' ? 'heart' : 'explode');
-            const targets = group.geometry.userData[(targetState === 'PHOTO') ? 'explode' : targetKey];
+            
+            const targetKey = (targetState === 'TREE') ? 'tree' : 'explode';
+            const targets = group.geometry.userData[targetKey];
             for(let i=0; i<positions.length; i++) { positions[i] += (targets[i] - positions[i]) * speed; }
             group.geometry.attributes.position.needsUpdate = true;
             const count = positions.length / 3;
@@ -176,9 +168,6 @@
                     if(type === 'red') br = 0.5 + 0.5 * Math.sin(time * 3 + phases[i]); else if(type === 'gold') br = 0.8 + 0.4 * Math.sin(time * 10 + phases[i]);
                     colors[i*3] = baseColor.r * br; colors[i*3+1] = baseColor.g * br; colors[i*3+2] = baseColor.b * br;
                 }
-            } else if (targetState === 'HEART') {
-                group.rotation.y = 0; const beat = 1 + Math.abs(Math.sin(time * 3)) * 0.15; group.scale.set(beat, beat, beat);
-                for(let i=0; i<count; i++) { colors[i*3] = baseColor.r; colors[i*3+1] = baseColor.g; colors[i*3+2] = baseColor.b; if (i % 3 === 0) sizes[i] = baseSize; else sizes[i] = 0; }
             } else {
                 group.scale.set(1,1,1); group.rotation.y += (handRotY - group.rotation.y) * 0.1;
                 for(let i=0; i<count; i++) { sizes[i] = baseSize; let br = 0.8 + 0.5 * Math.sin(time * 12 + phases[i]); colors[i*3] = baseColor.r * br; colors[i*3+1] = baseColor.g * br; colors[i*3+2] = baseColor.b * br; }
@@ -202,16 +191,12 @@
             }
 
             if (state === 'TREE') {
-                titleMesh.visible = true; starMesh.visible = true; loveMesh.visible = false;
+                titleMesh.visible = true; starMesh.visible = true;
                 starMesh.rotation.z -= 0.02; starMesh.material.opacity = 0.7 + 0.3*Math.sin(time*5);
                 photoMeshes.forEach(m => { m.scale.lerp(new THREE.Vector3(0,0,0), 0.1); m.visible = false; });
-            } else if (state === 'HEART') {
-                titleMesh.visible = false; starMesh.visible = false; loveMesh.visible = true;
-                photoMeshes.forEach(m => { m.visible = false; });
-                const s = 1 + Math.abs(Math.sin(time*3))*0.1; loveMesh.scale.set(s,s,1);
             } else if (state === 'EXPLODE') {
-                titleMesh.visible = false; starMesh.visible = false; loveMesh.visible = false;
-                const baseAngle = groupGold.rotation.y; const step = (Math.PI * 2) / 5; let best = 0; let maxZ = -999;
+                titleMesh.visible = false; starMesh.visible = false;
+                const baseAngle = groupGold.rotation.y; const step = (Math.PI * 2) / 6; let best = 0; let maxZ = -999;
                 photoMeshes.forEach((m, i) => {
                     m.visible = true; const angle = baseAngle + i * step; const x = Math.sin(angle) * CONFIG.photoOrbitRadius; const z = Math.cos(angle) * CONFIG.photoOrbitRadius;
                     m.position.lerp(new THREE.Vector3(x, Math.sin(time+i)*3, z), 0.1); m.lookAt(camera.position);
@@ -220,7 +205,6 @@
                 });
                 selectedIndex = best;
             } else if (state === 'PHOTO') {
-                loveMesh.visible = false;
                 photoMeshes.forEach((m, i) => { if (i === selectedIndex) { m.position.lerp(new THREE.Vector3(0,0,60), 0.1); m.scale.lerp(new THREE.Vector3(5,5,5), 0.1); m.lookAt(camera.position); } else { m.scale.lerp(new THREE.Vector3(0,0,0), 0.1); } });
             }
             renderer.render(scene, camera);
@@ -234,13 +218,9 @@
             const canvas = document.getElementById('camera-preview');
             const ctx = canvas.getContext('2d');
             const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-            hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+            hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
             hands.onResults(results => {
                 ctx.clearRect(0,0,100,75); ctx.drawImage(results.image, 0, 0, 100, 75);
-                if (results.multiHandLandmarks.length === 2) {
-                    const h1 = results.multiHandLandmarks[0]; const h2 = results.multiHandLandmarks[1];
-                    if (Math.hypot(h1[8].x - h2[8].x, h1[8].y - h2[8].y) < 0.15 && Math.hypot(h1[4].x - h2[4].x, h1[4].y - h2[4].y) < 0.15) { state = 'HEART'; return; }
-                }
                 if(results.multiHandLandmarks.length > 0) {
                     const lm = results.multiHandLandmarks[0]; handX = lm[9].x; 
                     const tips = [8,12,16,20]; const wrist = lm[0]; let d = 0; tips.forEach(i => d += Math.hypot(lm[i].x-wrist.x, lm[i].y-wrist.y));
